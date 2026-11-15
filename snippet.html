@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HKDSE Chemistry 網上自主學習平台</title>
+  <style>
+    :root {
+      --primary: #1e3a8a;
+      --primary-light: #3b82f6;
+      --secondary: #0d9488;
+      --danger: #ef4444;
+      --success: #10b981;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #1e293b;
+      --text-muted: #64748b;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang TC", "Microsoft JhengHei", sans-serif; }
+    body { background-color: var(--bg); color: var(--text); padding: 20px; }
+    .container { max-width: 900px; margin: 0 auto; }
+    .header { display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; background: var(--card-bg); border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 24px; }
+    .header h1 { font-size: 20px; color: var(--primary); }
+    .user-badge { display: flex; align-items: center; gap: 12px; }
+    .btn { padding: 8px 18px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; transition: 0.2s; }
+    .btn-primary { background: var(--primary-light); color: #fff; }
+    .btn-primary:hover { background: var(--primary); }
+    .btn-danger { background: #fee2e2; color: var(--danger); }
+    .btn-danger:hover { background: #fecaca; }
+    .card { background: var(--card-bg); border-radius: 12px; padding: 28px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 24px; }
+    .hidden { display: none !important; }
+    
+    /* Login */
+    .login-box { max-width: 420px; margin: 60px auto; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px; }
+    .form-control { width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 15px; }
+    .role-toggle { display: flex; gap: 10px; margin-bottom: 20px; }
+    .role-btn { flex: 1; padding: 10px; border: 2px solid #cbd5e1; border-radius: 8px; background: #fff; cursor: pointer; font-weight: 600; text-align: center; }
+    .role-btn.active { border-color: var(--primary-light); background: #eff6ff; color: var(--primary); }
+
+    /* Topic Grid */
+    .topic-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 18px; }
+    .topic-card { border: 2px solid #e2e8f0; border-radius: 10px; padding: 20px; cursor: pointer; transition: 0.2s; }
+    .topic-card:hover { border-color: var(--secondary); background: #f0fdfa; transform: translateY(-2px); }
+    .topic-title { font-size: 17px; font-weight: 700; color: var(--primary); margin-bottom: 6px; }
+    .topic-desc { font-size: 13px; color: var(--text-muted); }
+
+    /* Quiz */
+    .question-block { margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid #e2e8f0; }
+    .question-title { font-weight: 600; margin-bottom: 14px; line-height: 1.5; }
+    .options-list { display: flex; flex-direction: column; gap: 10px; }
+    .option-label { display: flex; align-items: center; padding: 12px 16px; border: 1.5px solid #cbd5e1; border-radius: 8px; cursor: pointer; transition: 0.15s; }
+    .option-label:hover { background: #f1f5f9; }
+    .option-label input { margin-right: 12px; }
+
+    /* Report & Teacher Tables */
+    .data-table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+    .data-table th, .data-table td { padding: 12px 14px; text-align: left; border-bottom: 1px solid #e2e8f0; font-size: 14px; }
+    .data-table th { background: #f8fafc; font-weight: 700; color: var(--text-muted); }
+    .badge { display: inline-block; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 700; }
+    .badge-success { background: #dcfce7; color: #166534; }
+    .badge-danger { background: #fee2e2; color: #991b1b; }
+    .explanation-box { background: #f8fafc; border-left: 4px solid var(--secondary); padding: 10px 14px; margin-top: 8px; font-size: 13px; color: #334155; }
+    .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px; }
+    .summary-card { background: #f1f5f9; padding: 16px; border-radius: 8px; text-align: center; }
+    .summary-num { font-size: 26px; font-weight: 700; color: var(--primary); }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div id="top-bar" class="header hidden">
+    <h1 id="app-title">🧪 HKDSE 化學自主學習平台</h1>
+    <div class="user-badge">
+      <span id="user-display" style="font-weight:600;"></span>
+      <button class="btn btn-danger" onclick="logout()">登出</button>
+    </div>
+  </div>
+
+  <!-- 登入介面 -->
+  <div id="login-view" class="card login-box">
+    <h2 style="text-align: center; margin-bottom: 20px; color: var(--primary);">化學科測驗系統登入</h2>
+    <div class="role-toggle">
+      <div id="tab-student" class="role-btn active" onclick="setRole('student')">👨‍🎓 學生登入</div>
+      <div id="tab-teacher" class="role-btn" onclick="setRole('teacher')">👩‍🏫 教師管理</div>
+    </div>
+    <div class="form-group">
+      <label id="id-label">學生編號 / 姓名</label>
+      <input type="text" id="username" class="form-control" placeholder="例: 4A_ChanTaiMan">
+    </div>
+    <div class="form-group">
+      <label>密碼</label>
+      <input type="password" id="password" class="form-control" placeholder="學生預設密碼: 123456 / 教師: chem888">
+    </div>
+    <button class="btn btn-primary" style="width: 100%; margin-top: 10px;" onclick="handleLogin()">登入系統</button>
+  </div>
+
+  <!-- 學生主頁：選擇課題 -->
+  <div id="student-topics-view" class="card hidden">
+    <h2 style="margin-bottom: 16px; color: var(--primary);">選擇化學測驗課題</h2>
+    <div class="topic-grid">
+      <div class="topic-card" onclick="startQuiz('topic1')">
+        <div class="topic-title">課題一：微觀世界與化學鍵</div>
+        <div class="topic-desc">Microscopic World I & Bonding (離子結構、共價分子、金屬鍵)</div>
+      </div>
+      <div class="topic-card" onclick="startQuiz('topic2')">
+        <div class="topic-title">課題二：酸、鹽基與摩爾計算</div>
+        <div class="topic-desc">Acids, Bases & Mole Concept (pH 計算、滴定實驗、指示劑)</div>
+      </div>
+      <div class="topic-card" onclick="startQuiz('topic3')">
+        <div class="topic-title">課題三：氧化還原反應與化學電池</div>
+        <div class="topic-desc">Redox Reactions & Chemical Cells (氧化劑、原電池、金屬活潑性)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 做卷介面 -->
+  <div id="quiz-view" class="card hidden">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+      <h2 id="quiz-title" style="color: var(--primary);"></h2>
+      <button class="btn btn-danger" onclick="cancelQuiz()">返回課題列表</button>
+    </div>
+    <form id="quiz-form"></form>
+    <button class="btn btn-primary" style="margin-top: 10px; width: 100%;" onclick="submitQuiz()">送出試卷並批改</button>
+  </div>
+
+  <!-- 學生成績單介面 -->
+  <div id="student-report-view" class="card hidden">
+    <h2 style="color: var(--primary); margin-bottom: 8px;">測驗評估報告 (Student Report)</h2>
+    <p id="report-meta" style="color: var(--text-muted); margin-bottom: 20px;"></p>
+    <div class="summary-grid">
+      <div class="summary-card"><div>總得分</div><div class="summary-num" id="rep-score">-</div></div>
+      <div class="summary-card"><div>正確率</div><div class="summary-num" id="rep-pct">-</div></div>
+      <div class="summary-card"><div>評級</div><div class="summary-num" id="rep-grade">-</div></div>
+    </div>
+    <h3 style="margin-bottom: 12px;">作答明細檢視</h3>
+    <div id="report-detail-list"></div>
+    <button class="btn btn-primary" style="margin-top: 20px;" onclick="backToTopics()">完成並返回課題列表</button>
+  </div>
+
+  <!-- 教師數據儀表板 -->
+  <div id="teacher-dashboard-view" class="card hidden">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+      <h2 style="color: var(--primary);">全班學生測驗進度與數據 (Teacher Data Dashboard)</h2>
+      <button class="btn btn-danger" onclick="clearAllData()">清除所有紀錄</button>
+    </div>
+    <div class="summary-grid">
+      <div class="summary-card"><div>總測驗次數</div><div class="summary-num" id="teach-total-submissions">0</div></div>
+      <div class="summary-card"><div>全班平均分</div><div class="summary-num" id="teach-avg-score">0%</div></div>
+      <div class="summary-card"><div>及格率 (≥50%)</div><div class="summary-num" id="teach-pass-rate">0%</div></div>
+    </div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>提交日期與時間 (Date)</th>
+          <th>學生姓名 / 編號</th>
+          <th>測驗課題</th>
+          <th>得分</th>
+          <th>百分比</th>
+          <th>狀態</th>
+        </tr>
+      </thead>
+      <tbody id="teacher-records-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  // 題目資料庫 (涵蓋 DSE 化學核心概念)
+  const questionBank = {
+    topic1: {
+      name: "微觀世界與化學鍵",
+      questions: [
+        {
+          q: "下列哪一種物質在固態及熔融狀態下均不能導電，但具有巨型結構？",
+          options: ["A. 氯化鈉 (Sodium chloride)", "B. 石英 / 二氧化矽 (Quartz / Silicon dioxide)", "C. 石墨 (Graphite)", "D. 銅 (Copper)"],
+          answer: 1,
+          exp: "二氧化矽 (SiO2) 具巨型共價結構，分子內無自由游動電子或離子，固態及熔態均為非導體。"
+        },
+        {
+          q: "鎂 (Mg) 與氮 (N) 反應生成氮化鎂時，其化學式應為？",
+          options: ["A. MgN", "B. Mg2N3", "C. Mg3N2", "D. MgN2"],
+          answer: 2,
+          exp: "Mg 形成 Mg²⁺ 離子，N 形成 N³⁻ 氮化物離子。交叉配對得化學式為 Mg3N2。"
+        }
+      ]
+    },
+    topic2: {
+      name: "酸、鹽基與摩爾計算",
+      questions: [
+        {
+          q: "在 25°C 下，0.01 M 鹽酸 (HCl) 與 0.01 M 乙酸 (CH3COOH) 相比，下列哪項陳述正確？",
+          options: ["A. 兩者的 pH 值完全相同", "B. 乙酸溶液的導電性能較高", "C. 鹽酸的 pH 值較低", "D. 完全中和時鹽酸所需 NaOH 摩爾數較多"],
+          answer: 2,
+          exp: "HCl 為強酸完全電離，[H⁺] = 0.01 M (pH=2)；CH3COOH 為弱酸僅部分電離，[H⁺] < 0.01 M (pH>2)，故鹽酸 pH 較低。"
+        },
+        {
+          q: "以標準 NaOH 溶液滴定未知濃度的鹽酸時，最適宜使用的酸鹼指示劑是？",
+          options: ["A. 甲基橙 (Methyl orange) 或酚酞 (Phenolphthalein)", "B. 只有石蕊試劑 (Litmus)", "C. 普遍指示劑 (Universal indicator)", "D. 澱粉溶液 (Starch)"],
+          answer: 0,
+          exp: "強酸滴定強鹼在等當點時 pH 急劇變化跨越 4 至 10，甲基橙與酚酞皆能準確變色。"
+        }
+      ]
+    },
+    topic3: {
+      name: "氧化還原反應與化學電池",
+      questions: [
+        {
+          q: "將酸化高錳酸鉀溶液 (Acidified KMnO4) 滴入硫酸鐵(II) (FeSO4) 溶液中，觀察到的顏色變化是？",
+          options: ["A. 溶液由橙色變為綠色", "B. 紫色變為極淡粉紅 / 無色", "C. 溶液由無色變為深褐色", "D. 無明顯可見變化"],
+          answer: 1,
+          exp: "KMnO4 是強氧化劑，MnO4⁻ (紫色) 被還原成 Mn²⁺ (近乎無色)，同時將 Fe²⁺ 氧化成 Fe³⁺。"
+        },
+        {
+          q: "在銅-鋅化學電池 (Zn/Cu simple chemical cell) 中，下列哪項敘述是正確的？",
+          options: ["A. 銅片為負極並失去電子", "B. 電子由銅片經外電路流向鋅片", "C. 鋅片質量隨著反應進行而減輕", "D. 鋅片周圍發生還原反應"],
+          answer: 2,
+          exp: "鋅較活潑作為負極發生氧化反應：Zn → Zn²⁺ + 2e⁻，因此鋅電極會溶解而質量減輕。"
+        }
+      ]
+    }
+  };
+
+  // 全域狀態
+  let currentRole = 'student';
+  let currentUser = '';
+  let activeTopicKey = '';
+  let currentQuestions = [];
+
+  function setRole(role) {
+    currentRole = role;
+    document.getElementById('tab-student').classList.toggle('active', role === 'student');
+    document.getElementById('tab-teacher').classList.toggle('active', role === 'teacher');
+    document.getElementById('id-label').innerText = role === 'student' ? '學生編號 / 姓名' : '教師代號';
+    document.getElementById('username').placeholder = role === 'student' ? '例: 4A_ChanTaiMan' : '例: teacher';
+  }
+
+  function handleLogin() {
+    const user = document.getElementById('username').value.trim();
+    const pass = document.getElementById('password').value.trim();
+    if (!user || !pass) { alert('請輸入完整帳號與密碼！'); return; }
+
+    if (currentRole === 'teacher') {
+      if (pass !== 'chem888') { alert('教師密碼不正確！(預設密碼為: chem888)'); return; }
+      currentUser = user;
+      showTeacherDashboard();
+    } else {
+      currentUser = user;
+      showStudentPortal();
+    }
+    document.getElementById('top-bar').classList.remove('hidden');
+    document.getElementById('user-display').innerText = `${currentRole === 'teacher' ? '👩‍🏫 教師' : '👨‍🎓 學生'}: ${currentUser}`;
+    document.getElementById('login-view').classList.add('hidden');
+  }
+
+  function logout() {
+    currentUser = '';
+    document.getElementById('top-bar').classList.add('hidden');
+    document.getElementById('student-topics-view').classList.add('hidden');
+    document.getElementById('quiz-view').classList.add('hidden');
+    document.getElementById('student-report-view').classList.add('hidden');
+    document.getElementById('teacher-dashboard-view').classList.add('hidden');
+    document.getElementById('login-view').classList.remove('hidden');
+    document.getElementById('password').value = '';
+  }
+
+  function showStudentPortal() {
+    hideAllScreens();
+    document.getElementById('student-topics-view').classList.remove('hidden');
+  }
+
+  function startQuiz(topicKey) {
+    activeTopicKey = topicKey;
+    const topic = questionBank[topicKey];
+    currentQuestions = topic.questions;
+    hideAllScreens();
+    document.getElementById('quiz-view').classList.remove('hidden');
+    document.getElementById('quiz-title').innerText = `測驗中：${topic.name}`;
+
+    const form = document.getElementById('quiz-form');
+    form.innerHTML = currentQuestions.map((item, qIdx) => `
+      <div class="question-block">
+        <div class="question-title">第 ${qIdx + 1} 題：${item.q}</div>
+        <div class="options-list">
+          ${item.options.map((opt, oIdx) => `
+            <label class="option-label">
+              <input type="radio" name="q_${qIdx}" value="${oIdx}">
+              <span>${opt}</span>
+            </label>
+          `).join('')}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function cancelQuiz() {
+    if (confirm('確定要放棄本次作答並返回課題選單嗎？')) { showStudentPortal(); }
+  }
+
+  function submitQuiz() {
+    let score = 0;
+    const userAnswers = [];
+    for (let i = 0; i < currentQuestions.length; i++) {
+      const selected = document.querySelector(`input[name="q_${i}"]:checked`);
+      if (!selected) { alert(`請先完成第 ${i + 1} 題！`); return; }
+      const val = parseInt(selected.value);
+      userAnswers.push(val);
+      if (val === currentQuestions[i].answer) score++;
+    }
+
+    // 儲存至本地資料庫
+    const now = new Date();
+    const formattedDate = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    const record = {
+      id: Date.now(),
+      student: currentUser,
+      date: formattedDate,
+      topicKey: activeTopicKey,
+      topicName: questionBank[activeTopicKey].name,
+      score: score,
+      total: currentQuestions.length,
+      pct: Math.round((score / currentQuestions.length) * 100),
+      answers: userAnswers
+    };
+
+    const records = JSON.parse(localStorage.getItem('chem_quiz_data') || '[]');
+    records.push(record);
+    localStorage.setItem('chem_quiz_data', JSON.stringify(records));
+
+    showStudentReport(record);
+  }
+
+  function showStudentReport(record) {
+    hideAllScreens();
+    document.getElementById('student-report-view').classList.remove('hidden');
+    document.getElementById('report-meta').innerText = `學生：${record.student} | 課題：${record.topicName} | 測驗時間：${record.date}`;
+    document.getElementById('rep-score').innerText = `${record.score} / ${record.total}`;
+    document.getElementById('rep-pct').innerText = `${record.pct}%`;
+    document.getElementById('rep-grade').innerText = record.pct >= 80 ? '優異 (Level 5*)' : (record.pct >= 50 ? '合格 (Pass)' : '需加強 (Remedial)');
+
+    const detailList = document.getElementById('report-detail-list');
+    detailList.innerHTML = currentQuestions.map((q, idx) => {
+      const isCorrect = record.answers[idx] === q.answer;
+      return `
+        <div class="question-block">
+          <div class="question-title">
+            第 ${idx + 1} 題：${q.q}
+            <span class="badge ${isCorrect ? 'badge-success' : 'badge-danger'}" style="margin-left: 8px;">
+              ${isCorrect ? '正確 (+1)' : '錯誤 (0)'}
+            </span>
+          </div>
+          <div style="font-size: 14px; margin-bottom: 6px;">你的選擇：<b>${q.options[record.answers[idx]]}</b></div>
+          ${!isCorrect ? `<div style="font-size: 14px; color: var(--success); font-weight: 600;">正確答案：${q.options[q.answer]}</div>` : ''}
+          <div class="explanation-box">💡 <b>解題剖析：</b>${q.exp}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function backToTopics() { showStudentPortal(); }
+
+  function showTeacherDashboard() {
+    hideAllScreens();
+    document.getElementById('teacher-dashboard-view').classList.remove('hidden');
+    renderTeacherRecords();
+  }
+
+  function renderTeacherRecords() {
+    const records = JSON.parse(localStorage.getItem('chem_quiz_data') || '[]');
+    document.getElementById('teach-total-submissions').innerText = records.length;
+
+    if (records.length === 0) {
+      document.getElementById('teach-avg-score').innerText = '0%';
+      document.getElementById('teach-pass-rate').innerText = '0%';
+      document.getElementById('teacher-records-tbody').innerHTML = `<tr><td colspan="6" style="text-align:center; color: var(--text-muted); padding: 24px;">暫無任何測驗繳交紀錄</td></tr>`;
+      return;
+    }
+
+    const totalPct = records.reduce((sum, r) => sum + r.pct, 0);
+    const passCount = records.filter(r => r.pct >= 50).length;
+    document.getElementById('teach-avg-score').innerText = `${Math.round(totalPct / records.length)}%`;
+    document.getElementById('teach-pass-rate').innerText = `${Math.round((passCount / records.length) * 100)}%`;
+
+    const tbody = document.getElementById('teacher-records-tbody');
+    tbody.innerHTML = records.slice().reverse().map(r => `
+      <tr>
+        <td><b>${r.date}</b></td>
+        <td>${r.student}</td>
+        <td>${r.topicName}</td>
+        <td>${r.score} / ${r.total}</td>
+        <td><b>${r.pct}%</b></td>
+        <td><span class="badge ${r.pct >= 50 ? 'badge-success' : 'badge-danger'}">${r.pct >= 50 ? '及格' : '不及格'}</span></td>
+      </tr>
+    `).join('');
+  }
+
+  function clearAllData() {
+    if (confirm('確定要清除所有學生的測驗紀錄嗎？此動作無法復原！')) {
+      localStorage.removeItem('chem_quiz_data');
+      renderTeacherRecords();
+    }
+  }
+
+  function hideAllScreens() {
+    document.getElementById('login-view').classList.add('hidden');
+    document.getElementById('student-topics-view').classList.add('hidden');
+    document.getElementById('quiz-view').classList.add('hidden');
+    document.getElementById('student-report-view').classList.add('hidden');
+    document.getElementById('teacher-dashboard-view').classList.add('hidden');
+  }
+</script>
+</body>
+</html>
